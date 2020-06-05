@@ -20,7 +20,7 @@
         <a href="#" class="logo"><img src="images/logo02.png" alt="logo"></a>
         <div class="user_info">
             <img src="images/2.jpg" alt="person">
-            <span>欢迎&nbsp;&nbsp;李思思</span>
+            <span>欢迎&nbsp;&nbsp;<i style="font-style: normal;">user</i></span>
             <b>管理员</b>
         </div>
         <!-- 左侧导航栏 -->
@@ -54,5 +54,34 @@
 
         </div>
     </div>
+    <script>
+        $(function(){
+            // 1 用原生js发送ajax请求 将token令牌带过去
+            // 因为获取个人信息需要token 来确定你是否登录了
+            // 解决方法:设置请求头
+            // var xhr =new XMLHttpRequest();
+            // xhr.open('get','http://localhost:8080/api/v1/admin/user/detail');
+            // // 设置请求头 xhr.setRequestHeader(建:'后端人员定义的',值:存放在localStorage中的值)
+            // xhr.setRequestHeader('Authorization',localStorage.getItem('token'));
+            // xhr.onload =function(){
+            //     console.log(xhr.response);
+            // }
+            // xhr.send();
+            // 2 jq发送Ajax请求 获取个人信息 将token令牌带过去
+            $.ajax({
+                type:'get',
+                url:'http://localhost:8080/api/v1/admin/user/detail',
+                // headers:{
+                //     'Authorization':localStorage.getItem('token')
+                // },
+                success:function(backData){
+                    console.log(backData);
+                    $('.user_info>span>i').text(backData.data.nickname);
+                    $('.user_info>img').attr('src',backData.data.userPic);
+                    $('.user_center_link>img').attr('src',backData.data.userPic);
+                }
+            })
+        })
+    </script>
 </body>
 </html>
