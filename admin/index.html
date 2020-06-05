@@ -81,6 +81,16 @@
                     $('.user_center_link>img').attr('src',backData.data.userPic);
                 }
             })
+
+            // 3 登出系统 移除token令牌,放回到登录页面
+            $('.logout').on('click',function(e){
+                 // 3.1 阻止a标签的默认跳转行为
+                 e.preventDefault();
+                 if(confirm('你确定要退出吗')){
+                     localStorage.removeItem('token');
+                     window.location.href='./login.html';
+                 }
+            })
         })
     </script>
 </body>
