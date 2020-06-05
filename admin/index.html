@@ -86,6 +86,7 @@
             $('.logout').on('click',function(e){
                  // 3.1 阻止a标签的默认跳转行为
                  e.preventDefault();
+                 // 3.2 提示用户
                  if(confirm('你确定要退出吗')){
                      localStorage.removeItem('token');
                      window.location.href='./login.html';
