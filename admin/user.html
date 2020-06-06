@@ -24,13 +24,13 @@
                 <div class="form-group">
                     <label for="inputEmail1" class="col-sm-2 control-label">用户名称：</label>
                     <div class="col-sm-4">
-                        <input type="text" name="username" class="form-control username" id="inputEmail1" value="李思思">
+                        <input type="text" name="username" class="form-control username" id="username" value="李思思">
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="inputEmail2" class="col-sm-2 control-label">昵称：</label>
                     <div class="col-sm-4">
-                        <input type="text" name="nickname" class="form-control nickname" id="inputEmail2" value="哈哈思">
+                        <input type="text" name="nickname" class="form-control nickname" id="nickname" value="哈哈思">
                     </div>
                 </div>
                 <div class="form-group">
@@ -44,7 +44,7 @@
                     <label for="inputPassword3" class="col-sm-2 control-label">用户图标：</label>
                     <div class="col-sm-10">
                         <img src="images/2.jpg" alt="" class="user_pic">
-                        <input style="display: block" name="userPic" type="file" id="exampleInputFile">
+                        <input style="display: none" name="userPic" type="file" id="exampleInputFile">
                         <!-- 给label标签的for属性赋值,值是input标签的id,那这样的话点击label就相当于点击了input -->
                         <br>
                         <label for="exampleInputFile">
@@ -68,6 +68,83 @@
             </form>
         </div>
     </div>
+
+    <script src="./libs/http.js"></script>
+    <script>
+
+        $(function () {
+            // 1 进入页面发送ajax请求获取个人信息
+            $.ajax({
+                type: 'get',
+                url: BigNew.user_detail,
+                success: function (backData) {
+                    if (backData.code == 200) {
+                        // 显示到对应的标签中
+                        // $('.username').val(backData.data.username);
+                        // $('.nickname').val(backData.data.nickname);
+                        // $('.email').val(backData.data.email);
+                        // $('.password').val(backData.data.passwodr);
+                        for (var key in backData.data) {
+                            $('.' + key).val(backData.data[key]);
+                        }
+
+                        $('img.user_pic').attr('src', backData.data.userPic);
+                    }
+                }
+            })
+
+            // 2 头像预览
+            $('#exampleInputFile').on('change', function () {
+                //2.1 获取选中的这个头像
+                var file1 = this.files[0];
+                //2.2 设置一个url
+                var url = URL.createObjectURL(file1);
+                //2.3 更换图片路径
+                $('img.user_pic').attr('src', url);
+            })
+
+            // 3 提交修改的数据
+            $('.btn-edit').on('click', function (e) {
+                //3.1 阻止表单的默认提交行为
+                e.preventDefault();
+                //3.2 form 表单获取数据
+                var form1 = document.querySelector('form');
+                var fd = new FormData(form1);
+                // 3.3 发送Ajax请求
+                $.ajax({
+                    type: 'post',
+                    url: BigNew.user_edit,
+                    data: fd,
+                    contentType: false,
+                    processData: false,
+                    success: function (backData) {
+                        if (backData.code == 200) {
+
+                            alert('更新成功');
+                            // 3.4 更新成功刷新页面
+                            // 第一种 
+                            //parent.window.location.reload();
+                            //第二种 从新发送Ajax请求获取页面
+                            $.ajax({
+                                type: 'get',
+                                //url:'http://localhost:8080/api/v1/admin/user/detail',
+                                url: BigNew.user_info,
+                                // headers:{
+                                //     'Authorization':localStorage.getItem('token')
+                                // },
+                                success: function (backData) {
+                                    console.log(backData);
+                                    parent.$('.user_info>span>i').text(backData.data.nickname);
+                                    parent.$('.user_info>img').attr('src', backData.data.userPic);
+                                    parent.$('.user_center_link>img').attr('src', backData.data.userPic);
+                                }
+                            })
+                        }
+                    }
+                })
+            })
+        })
+    </script>
 </body>
 
 </html>

@@ -71,8 +71,8 @@
       // 1.4 非空判断
       if (username == '' || password == '') {
         //alert('账号或密码不能为空');
-        //bootstrap弹出提示框
         $('#myModal .modal-body>p').text('账号或密码不能为空');
+        //bootstrap弹出提示框
         $('#myModal').modal();
         return;
       }
@@ -92,6 +92,8 @@
             //alert('登录成功');
             $('#myModal .modal-body>p').text('登录成功');
             $('#myModal').modal();
+            //hide 方法调用之后立即触发该事件。
+            //模态框点击确定之后存储token并跳转页面
             $('#myModal').on('hide.bs.modal', function (e) {
               //把服务器返回的token令牌保存起来
               localStorage.setItem('token',backData.token);
