@@ -96,7 +96,7 @@
                 //     'Authorization':localStorage.getItem('token')
                 // },
                 success:function(backData){
-                    console.log(backData);
+                    //console.log(backData);
                     $('.user_info>span>i').text(backData.data.nickname);
                     $('.user_info>img').attr('src',backData.data.userPic);
                     $('.user_center_link>img').attr('src',backData.data.userPic);
@@ -114,7 +114,7 @@
                  }
             })
 
-
+            
             // 4 左侧菜单点击事件
             $('div.level01').on('click',function(){
                 //4.1 选中的菜单添加active类
@@ -137,6 +137,9 @@
                 // 5.1 点击li标签设置active类
                 $(this).addClass('active').siblings('li').removeClass('active');
             })
+
+
+            
         })
     </script>
 </body>

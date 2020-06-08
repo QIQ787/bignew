@@ -11,8 +11,12 @@
     <link rel="stylesheet" href="./css/iconfont.css">
     <link rel="stylesheet" href="./css/main.css">
     <script src="./libs/jquery-1.12.4.min.js"></script>
+    <script src="./libs/bootstrap/js/bootstrap.min.js"></script>
     <!-- 引入模板引擎js文件 -->
     <script src="./libs/template-web.js"></script>
+
+    <!-- 分页插件 -->
+    <script src="./libs/jquery.twbsPagination.js"></script>
 </head>
 
 <body>
@@ -62,16 +66,259 @@
                         <td class="text-center">2017-06-08 07:08:46</td>
                         <td class="text-center">已发布</td>
                         <td class="text-center">
-                            <a href="article_edit.html" class="btn btn-default btn-xs">编辑</a>
+                            <a href="article_edit.html" class="btn btn-default btn-xs ">编辑</a>
                             <a href="javascript:void(0);" class="btn btn-danger btn-xs delete">删除</a>
                         </td>
                     </tr>
                 </tbody>
             </table>
             <div class="row text-center">
+                <!-- 分页插件结构 -->
+                <ul class="pagination" id="pagination"></ul>
+                <p>没有数据!</p>
             </div>
         </div>
     </div>
+
+    <script src="./libs/http.js"></script>
+    <!-- 模板 分类模板 -->
+    <script id="category_temp" type="text/html">
+        <option value="">所有分类</option>
+        {{each data v}}
+        <option value="{{v.id}}">{{v.name}}</option>
+        {{/each}}
+    </script>
+
+    <!-- 模板 文章模板 -->
+    <script id="articleList_temp" type="text/html">
+        {{each data.data v}}
+        <tr>
+            <td>{{v.title}}</td>
+            <td>{{v.author}}</td>
+            <td>{{v.category}}</td>
+            <td class="text-center">{{v.date}}</td>
+            <td class="text-center">{{v.state}}</td>
+            <td class="text-center">
+                <a href="article_edit.html?id={{v.id}}"    class="btn btn-default btn-xs btn-edit">编辑</a>
+                <a href="javascript:void(0);" data-id="{{v.id}}" class="btn btn-danger btn-xs delete">删除</a>
+            </td>
+        </tr>
+        {{/each}}
+    </script>
+    <script>
+
+        var currentPage = 1; // 记录当前点击的页码
+        //1  获取所有的分类将所有的分类显示到下拉菜单中
+        $.ajax({
+                type: 'get',
+                url: BigNew.category_list,
+                success: function (backData) { 
+                    //console.log(backData);
+                    // 模板引擎核心方法
+                    if (backData.code == 200) {
+                        var resHtml = template('category_temp', backData);
+                        $('#selCategory').html(resHtml);
+                    }
+
+                }
+            })
+
+        // 封装从写的分页结构的函数
+        $(function () {
+            function getData(myPage, callback) {
+                $.ajax({
+                    type: 'get',
+                    url: BigNew.article_query,
+                    data: {
+                        type: $('#selCategory').val(),// 默认选中所以分类
+                        state: $('#selStatus').val(),// 默认选中所有状态
+                        page: myPage,// 第一页
+                        perpage: 2// 一页显示6条数据
+                    },
+                    success: function (backData) {
+                        //console.log(backData);
+                        if (backData.code == 200) {
+                            var resHtml = template('articleList_temp', backData);
+                            $('tbody').html(resHtml);
+                            
+                            // 需要在分页功能做完之后额外做的
+                            if (backData.data.data.length !=0&&callback != null) {
+                                // 有数据显示页码 隐藏p标签
+                                $('#pagination').show().next('p').hide();
+                                
+                                // 将获取的backData作为实参传递
+                                callback(backData);
+                            }else if(backData.data.data.length ==0&&currentPage==1){
+                                $('#pagination').hide().next('p').show();
+                            }else if(backData.data.totalPage==currentPage-1){
+                                currentPage -=1;
+                                // 重新绘制分页结构
+                                $('#pagination').twbsPagination('changeTotalPages', backData.data.totalPage, currentPage);
+                            }
+                        }
+                    }
+                })
+            }
+            
+            
+            
+
+            // 2 发送ajax 请求 获取默认选中的option 中的内容 一进来的
+            getData(1, function (backData) {
+                // 分页插件
+                $('#pagination').twbsPagination({
+                    totalPages: backData.data.totalPage,
+                    visiblePages: 7,
+                    first: '首页',
+                    prev: '上一页',
+                    next: '下一页',
+                    last: '尾页',
+                    onPageClick: function (event, page) {
+                        currentPage=page; // 记录当前点击的页码
+                        getData(page, null);
+                    }
+                });
+            })
+
+            // 3 筛选按钮
+            $('#btnSearch').on('click', function (e) {
+                currentPage =1 ;
+                //3.1 阻止form表单默认行为
+                e.preventDefault();
+                //3.2 发送ajax请求
+                getData(1,function(backData){
+                    // 点击筛选按钮 从新生成对应的点击页码
+                    $('#pagination').twbsPagination('changeTotalPages', backData.data.totalPage, 1);
+                })
+            })
+
+
+            // 4 删除文章
+            $('tbody').on('click','.delete',function(){
+                if(confirm('你确定要删除吗')){
+                    var id = $(this).attr('data-id');
+                    //console.log(id);
+                    // 4.1 发送ajax请求
+                    $.ajax({
+                        type:'post',
+                        url:BigNew.article_delete,
+                        data:{
+                            id:id
+                        },
+                        success:function(backData){
+                            if(backData.code==204){
+                                getData(currentPage,function(backData){
+                                    $('#pagination').twbsPagination('changeTotalPages', backData.data.totalPage, currentPage);
+                                });
+                            }
+                        }
+                    })
+                }
+            })
+
+            // 5 发表文章
+            $('#release_btn').on('click',function(){
+                //5.1 点击发表文章 选中ul中的第二个li标签发表文章
+                console.log(1);
+                parent.$('ul.level02>li:eq(1)').click();
+            })
+
+            
+        })
+         
+
+        // -------------------------------------------------------------------
+        // $.ajax({
+        //         type: 'get',
+        //         url: BigNew.category_list,
+        //         success: function (backData) {
+        //             //console.log(backData);
+        //             // 模板引擎核心方法
+        //             if (backData.code == 200) {
+        //                 var resHtml = template('category_temp', backData);
+        //                 $('#selCategory').html(resHtml);
+
+
+        //             }
+
+        //         }
+        //     })
+
+        //     // 2 发送ajax 请求 获取默认选中的option 中的内容
+        //     $.ajax({
+        //         type: 'get',
+        //         url: BigNew.article_query,
+        //         data: {
+        //             type: $('#selCategory').val(),// 默认选中所以分类
+        //             state: $('#selStatus').val(),// 默认选中所有状态
+        //             page: 1,// 第一页
+        //             perpage: 6// 一页显示6条数据
+        //         },
+        //         success: function (backData) {
+        //             console.log(backData);
+        //             if (backData.code == 200) {
+        //                 var resHtml = template('articleList_temp', backData);
+        //                 $('tbody').html(resHtml);
+
+        //                 // 分页插件
+        //                 $('#pagination').twbsPagination({
+        //                     totalPages: backData.data.totalPage,
+        //                     visiblePages: 7,
+        //                     first: '首页',
+        //                     prev: '上一页',
+        //                     next: '下一页',
+        //                     last: '尾页',
+        //                     onPageClick: function (event, page) {
+        //                         $.ajax({
+        //                             type: 'get',
+        //                             url: BigNew.article_query,
+        //                             data: {
+        //                                 type: $('#selCategory').val(),// 默认选中所以分类
+        //                                 state: $('#selStatus').val(),// 默认选中所有状态
+        //                                 page: page,// 第一页
+        //                                 perpage: 6// 一页显示6条数据
+        //                             },
+        //                             success: function (backData) {
+        //                                 console.log(backData);
+        //                                 if (backData.code == 200) {
+        //                                     var resHtml = template('articleList_temp', backData);
+        //                                     $('tbody').html(resHtml);
+        //                                 }
+        //                             }
+        //                         })
+        //                     }
+        //                 });
+        //             }
+        //         }
+        //     })
+
+        //     // 3 筛选按钮
+        //     $('#btnSearch').on('click', function (e) {
+        //         //3.1 阻止form表单默认行为
+        //         e.preventDefault();
+        //         //3.2 发送ajax请求
+        //         $.ajax({
+        //             type: 'get',
+        //             url: BigNew.article_query,
+        //             data: {
+        //                 type: $('#selCategory').val(),// 默认选中所以分类
+        //                 state: $('#selStatus').val(),// 默认选中所有状态
+        //                 page: 1,// 第一页
+        //                 perpage: 6// 一页显示6条数据
+        //             },
+        //             success: function (backData) {
+        //                 console.log(backData);
+        //                 if (backData.code == 200) {
+        //                     var resHtml = template('articleList_temp', backData);
+        //                     $('tbody').html(resHtml);
+
+        //                     // 点击筛选按钮 从新生成对应的点击页码
+        //                     $('#pagination').twbsPagination('changeTotalPages',backData.data.totalPage,1)
+        //                 }
+        //             }
+        //         })
+        //     })
+    </script>
 </body>
 
 </html>
