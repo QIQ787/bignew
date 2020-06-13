@@ -133,7 +133,7 @@
                         type: $('#selCategory').val(),// 默认选中所以分类
                         state: $('#selStatus').val(),// 默认选中所有状态
                         page: myPage,// 第一页
-                        perpage: 2// 一页显示6条数据
+                        perpage: 3// 一页显示6条数据
                     },
                     success: function (backData) {
                         //console.log(backData);
@@ -142,15 +142,15 @@
                             $('tbody').html(resHtml);
                             
                             // 需要在分页功能做完之后额外做的
-                            if (backData.data.data.length !=0&&callback != null) {
+                            if (backData.data.data.length !=0&&callback != null) { // 有数据时
                                 // 有数据显示页码 隐藏p标签
                                 $('#pagination').show().next('p').hide();
                                 
                                 // 将获取的backData作为实参传递
                                 callback(backData);
-                            }else if(backData.data.data.length ==0&&currentPage==1){
+                            }else if(backData.data.data.length ==0&&currentPage==1){ // 最后一页最后一条数据被删除时
                                 $('#pagination').hide().next('p').show();
-                            }else if(backData.data.totalPage==currentPage-1){
+                            }else if(backData.data.totalPage==currentPage-1){ // 搜索条件 搜索不到数据时
                                 currentPage -=1;
                                 // 重新绘制分页结构
                                 $('#pagination').twbsPagination('changeTotalPages', backData.data.totalPage, currentPage);

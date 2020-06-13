@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="css/reset.css">
     <link rel="stylesheet" href="css/font-awesome.min.css">
     <link rel="stylesheet" href="css/main.css">
+     
 </head>
 
 <body>
@@ -222,11 +223,185 @@
         <p>CopyRight © 2019 深圳大事件信息技术股份有限公司 All Rights Reserved</p>
         <p>电话：0755-****888 粤ICP备*******8号</p>
     </div>
-
-    <!-- 导入模板引擎js文件 -->
-    <script src="./js/template-web.js"></script>
     <!-- 引入jq文件 -->
     <script src="./js/jquery-1.12.4.min.js"></script>
+     <!-- 导入模板引擎js文件 -->
+     <script src="./js/template-web.js"></script>
+     
+    <!-- 最新资讯模板 -->
+    <script id="news_temp" type="text/html">
+        {{each data v}}
+        <div class="common_news_list">
+            <a href="./article.html?id={{v.id}}" class="list_pic"><img src="{{v.cover}}" alt=""></a>
+            <h4><a href="./article.html?id={{v.id}}">{{v.title}}</a></h4>
+            <p>{{@ v.intro}}</p>
+            <div class="new_info">
+                <span>标签：{{v.category}}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;<i class="fa fa-eye"></i>&nbsp;阅读:({{v.read}})
+                    &nbsp;&nbsp;&nbsp;<i class="fa fa-commenting"></i>&nbsp;评论:({{v.comments}})</span>
+                <b>{{v.date}}</b>
+            </div>
+        </div>
+        {{/each}}
+    </script>
+    
+    <!-- 热点图模板 -->
+    <script id="hot_temp" type="text/html">
+        {{each data v}}
+        {{if $index==0}}
+        <li class="first">
+        {{else}}
+        <li >
+        {{/if}}
+            <a href="./article.html?id={{v.id}}"><img src="{{v.cover}}" alt=""></a>
+            <p>{{v.title}}</p>
+        </li>
+        
+        {{/each}}
+    </script>
+    
+
+    <!-- 一周热门排行 -->
+    <script id="week_temp" type="text/html">
+        {{each data v}}
+        {{if $index==0}}
+        <li><span class="first">{{$index+1}}</span>
+        {{else if $index==1}}
+        <li><span class="second">{{$index+1}}</span>
+        {{else if $index==2}}
+        <li><span class="third">{{$index+1}}</span>
+        {{else}}
+        <li><span>{{$index+1}}</span>
+        {{/if}}
+        <a href="./article.html?id={{v.id}}">{{v.title}}</a></li>
+        {{/each}}
+    </script>
+
+    <!-- 评论模板 -->
+    <script id="comment_temp" type="text/html">
+        {{each data v}}
+        <li>
+            <span>{{v.author.charAt(0)}}</span>
+            <b><em>{{v.author}}</em>{{v.date}}-{{v.time}}说:</b>
+            <strong>{{v.intro}}</strong>
+        </li>
+        {{/each}}
+    </script>
+
+    <!-- 焦点关注 -->
+     <script id="focus_temp" type="text/html"> 
+        {{each data v}}
+        <li><a href="./article.html?id={{v.id}}">{{v.intro}}</a></li>
+        {{/each}}
+    </script>
+
+    <!-- 文章分类 -->
+    <script id="classify_temp" type="text/html">
+        {{each data v}}
+        <li><a href="./list.html?id={{v.id}}">{{v.name}}</a></li>
+        {{/each}}
+    </script>
+    
+    <script>
+        
+        $(function(){
+            // 1 显示最新资讯
+            $.ajax({
+                type:'get',
+                url:'http://localhost:8080/api/v1/index/latest',
+                success:function(backData){
+                    console.log(backData);
+                    if(backData.code==200){        
+                        var resHtml = template('news_temp',backData);
+                        $('.common_news').html(resHtml);
+                    }
+                }
+            })
+            
+            // 2 显示热点图
+            $.ajax({
+                type:'get',
+                url:'http://localhost:8080/api/v1/index/hotpic',
+                success:function(backData){
+                    //console.log(backData);
+                    if(backData.code==200){
+                        var resHtml =template('hot_temp',backData);
+                        $('.focus_list').html(resHtml);
+                    }
+                }
+            })
+
+            // 3 一周热门排行 
+            $.ajax({
+                type:'get',
+                url:'http://localhost:8080/api/v1/index/rank',
+                success:function(backData){
+                    //console.log(backData);
+                    if(backData.code==200){
+                       // console.log('1');
+                        // 1 方法一模板引擎
+                        var resHtml =template('week_temp',backData);
+                        $('.hotrank_list').html(resHtml);
+                        // 2 方法二 通过遍历放回的数据直接修改原来的标签上的值
+                        // for(var i=0;i<backData.data.length;i++){
+                        //     $('.hotrank_list>li').eq(i).children('a').text(backData.data[i].title);
+                        //     $('.hotrank_list>li').eq(i).children('a').attr('href','./article.html?id='+backData.data[i].id);
+                        // }
+                    }
+                }
+            })
+
+            // 4 最新评论
+            $.ajax({
+                type:'get',
+                url:'http://localhost:8080/api/v1/index/latest_comment',
+                success:function(backData){
+                   //console.log(backData);
+                   if(backData.code==200){
+                    var resHtml =template('comment_temp',backData);
+                   $('.comment_list').html(resHtml);
+                   }
+                }
+            })
+
+            // 5 焦点关注
+            $.ajax({
+                type:'get',
+                url:'http://localhost:8080/api/v1/index/attention',
+                success:function(backData){
+                    //console.log(backData);
+                    if(backData.code==200){
+                        var resHtml =template('focus_temp',backData);
+                        $('.guanzhu_list').html(resHtml);
+                    }
+                }
+            })
+
+            // 6 文章分类
+            $.ajax({
+                type:'get',
+                url:'http://localhost:8080/api/v1/index/category',
+                success:function(backData){
+                    console.log(backData);
+                    if(backData.code==200){
+                        var resHtml =template('classify_temp',backData);
+                        $('.level_two').html('<li class="up"></li>');
+                        $('.level_two').append(resHtml);
+                        $('.left_menu').html(resHtml);
+                    }
+                }
+            })
+
+            // 7 搜索功能
+            $('.search_btn').on('click',function(){
+                var key =$('.search_txt').val().trim();
+                if(key==''){
+                    alert('请输入关键词');
+                    return;
+                }
+                window.location.href='./list.html?search='+key;
+            })
+        })
+    </script>
 </body>
 
 </html>
